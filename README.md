@@ -1,30 +1,44 @@
-# LarageoPlugin (Laravel 4 Package)
+![](https://lithiumhosting.com/images/logo_new_black.png)
+
+# Laravel 5+ Geo IP Package
+**from Lithium Hosting**  
+We're always open to pull requests, feel free to make this your own or help us make it better.
+
+### Copyright
+(c) Lithium Hosting, llc
+
+### License
+This library is licensed under the MIT license; you can find a full copy of the license itself in the file /LICENSE
+
+### Requirements
+- Laravel 5.2+
+- php 5.5.9+
+- Knowledge of Laravel and php
+
+### Description
 
 A Laravel package that uses [geoPlugin](http://www.geoplugin.com/webservices/json) web service to fetch information from an IP. It will store in cache the IP information and it will expire in 1 week.
 
-----------------------
-
+* * *
 
 ### Installation
 
 Install this package through Composer. To your composer.json file, add:
 
 ```js
-    "fuhrmann/larageo-plugin": "dev-master"
+    "lithiumdev/larageo-plugin": "~1.0"
 ```
 
 Next, run the Composer update comand
 
     $ composer update
 
-
-
 Add the service provider to app/config/app.php, within the providers array.
 
 ```php
     'providers' => array(
         // ...
-        'Fuhrmann\LarageoPlugin\ServiceProvider',
+        LithiumDev\LaraGeo\ServiceProvider::class,
     ),
 ```
 
@@ -33,7 +47,7 @@ In the same file `config/app.php` add the alias:
 ```php
     'aliases' => array(
         //...
-        'LarageoPlugin'   => 'Fuhrmann\LarageoPlugin\Facade',
+        'LaraGeo'   => LithiumDev\LaraGeo\Facade::class,
     ),
 ```
 
@@ -42,14 +56,14 @@ In the same file `config/app.php` add the alias:
 You can specify an IP:
 
 ```php
-    $info = LarageoPlugin::getInfo('177.34.13.248'); // get info from a IP
+    $info = LaraGeo::getInfo('177.34.13.248'); // get info from a IP
     var_dump($info);
 ```
 
 Or use it without any param:
 
 ```php
-    $info = LarageoPlugin::getInfo(); // get info from the IP of the user acessing the page
+    $info = LaraGeo::getInfo(); // get info from the IP of the user accessing the page
     var_dump($info);
 ```
 
@@ -80,7 +94,7 @@ This is the output:
 Another useful example: You can also just return one field, e.g. city from in one call:
 
 ```php
-    $userCity = LarageoPlugin::getInfo()->geoplugin_city; // get the city from the user IP
+    $userCity = LaraGeo::getInfo()->geoplugin_city; // get the city from the user IP
     var_dump($userCity);
 ```
 
