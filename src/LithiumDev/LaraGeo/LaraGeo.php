@@ -4,6 +4,7 @@ namespace LithiumDev\LaraGeo;
 
 
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Http\Request;
 
 class LaraGeo {
     /**
@@ -17,7 +18,7 @@ class LaraGeo {
      *
      * @var string
      */
-    protected $api_adress = 'http://www.geoplugin.net/json.gp?ip={IP}';
+    protected $api_address = 'http://www.geoplugin.net/json.gp?ip={IP}';
 
     /**
      * Return all the information in an array.
@@ -30,10 +31,10 @@ class LaraGeo {
     {
         if ($ip == null)
         {
-            $ip = $this->getIpAdress();
+            $ip = Request::getClientIp();
         }
 
-        $url = str_replace('{IP}', $ip, $this->api_adress);
+        $url = str_replace('{IP}', $ip, $this->api_address);
         $hex = $this->ipToHex($ip);
         $me  = $this;
 
@@ -43,42 +44,14 @@ class LaraGeo {
             $this->isCached = true;
         }
         // Use the IP info stored in cache or store it
-        $ipInfo = Cache::remember($hex, 10080, function () use ($me, $url)
+        $ipInfo = Cache::remember($hex, 10080, function () use ($url)
         {
-            return $me->fetchInfo($url);
+            return $this->fetchInfo($url);
         });
 
         $ipInfo->geoplugin_cached = $this->isCached;
 
         return $ipInfo;
-    }
-
-    /**
-     * Get the IP adress.
-     *
-     * @link https://gist.github.com/cballou/2201933
-     *
-     * @return bool|string
-     */
-    public function getIpAdress()
-    {
-        $ip_keys = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
-        foreach ($ip_keys as $key)
-        {
-            if (array_key_exists($key, $_SERVER) === true)
-            {
-                foreach (explode(',', $_SERVER[ $key ]) as $ip)
-                {
-                    $ip = trim($ip);
-                    if ($this->validateIp($ip))
-                    {
-                        return $ip;
-                    }
-                }
-            }
-        }
-
-        return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : false;
     }
 
     /**
@@ -202,7 +175,7 @@ class LaraGeo {
             curl_setopt($ch, CURLOPT_URL, $url);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'LarageoPlugin Package v1.0');
+            curl_setopt($ch, CURLOPT_USERAGENT, 'LaraGeo Plugin Package v1.0');
             $response = curl_exec($ch);
             curl_close($ch);
         }
@@ -212,19 +185,19 @@ class LaraGeo {
         }
         else
         {
-            throw new \Exception('LarageoPlugin requires the CURL PHP extension or allow_url_fopen set to 1!');
+            throw new \Exception('LaraGeo Plugin requires the CURL PHP extension or allow_url_fopen set to 1!');
         }
 
         $response = json_decode($response);
 
         if (empty($response))
         {
-            throw new \Exception('Ops! The data is empty! Is ' . $url . ' acessible?');
+            throw new \Exception('Oops! The data is empty! Is ' . $url . ' accessible?');
         }
 
         if (isset($response->geoplugin_status) && $response->geoplugin_status == 404)
         {
-            throw new \Exception('Ops! Your request returned a 404 error! Is ' . $url . ' acessible?');
+            throw new \Exception('Oops! Your request returned a 404 error! Is ' . $url . ' accessible?');
         }
 
         return $response;
