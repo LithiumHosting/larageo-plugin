@@ -4,7 +4,6 @@ namespace LithiumDev\LaraGeo;
 
 
 use Cache;
-use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 
 class LaraGeo {
@@ -33,10 +32,9 @@ class LaraGeo {
      */
     public function getInfo($ip = null)
     {
-        $request = new Request;
         if (is_null($ip))
         {
-            $ip = $request->getClientIp();
+            $ip = request()->getClientIp();
         }
 
         $this->ip = $ip;
