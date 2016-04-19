@@ -3,8 +3,9 @@
 namespace LithiumDev\LaraGeo;
 
 
-use Illuminate\Support\Facades\Cache;
+use Cache;
 use Illuminate\Http\Request;
+use GuzzleHttp\Client;
 
 class LaraGeo {
     /**
@@ -18,54 +19,50 @@ class LaraGeo {
      *
      * @var string
      */
-    protected $api_address = 'http://www.geoplugin.net/json.gp?ip={IP}';
+    protected $url = 'http://www.geoplugin.net/json.gp';
+
+    private $ip;
 
     /**
      * Return all the information in an array.
      *
-     * @param $ip IP to search for
+     * @param null $ip
      *
      * @return array Info from the IP parameter
+     * @throws \LithiumDev\LaraGeo\LaraGeoException
      */
     public function getInfo($ip = null)
     {
-        if ($ip == null)
+        $request = new Request;
+        if (is_null($ip))
         {
-            $ip = Request::getClientIp();
+            $ip = $request->getClientIp();
         }
 
-        $url = str_replace('{IP}', $ip, $this->api_address);
-        $hex = $this->ipToHex($ip);
-        $me  = $this;
+        $this->ip = $ip;
+
+        $hex = $this->ipToHex($this->ip);
+
+        if ($hex === false)
+        {
+            throw new LaraGeoException('The IP ' . $this->ip . ' appears to be invalid');
+        }
 
         // Check if the IP is in the cache
         if (Cache::has($hex))
         {
             $this->isCached = true;
         }
+//        Cache::forget($hex);
         // Use the IP info stored in cache or store it
-        $ipInfo = Cache::remember($hex, 10080, function () use ($url)
+        $ipInfo = Cache::remember($hex, 10080, function ()
         {
-            return $this->fetchInfo($url);
+            return $this->fetchInfo();
         });
 
         $ipInfo->geoplugin_cached = $this->isCached;
 
         return $ipInfo;
-    }
-
-    /**
-     * Ensures an ip address is both a valid IP and does not fall within
-     * a private network range.
-     */
-    protected function validateIp($ip)
-    {
-        if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_IPV6) === false)
-        {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -75,7 +72,7 @@ class LaraGeo {
      *
      * @return bool|string
      */
-    public function ipToHex($ipAddress)
+    private function ipToHex($ipAddress)
     {
         $hex = '';
         if (strpos($ipAddress, ',') !== false)
@@ -156,50 +153,49 @@ class LaraGeo {
         return strtolower(str_pad($hex, 32, '0', STR_PAD_LEFT));
     }
 
+//    function ip2bin($ip)
+//    {
+//        $ipbin = '';
+//        if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false)
+//            return base_convert(ip2long($ip),10,2);
+//        if(filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) === false)
+//            return false;
+//        if(($ip_n = inet_pton($ip)) === false) return false;
+//        $bits = 15; // 16 x 8 bit = 128bit (ipv6)
+//        while ($bits >= 0)
+//        {
+//            $bin = sprintf("%08b",(ord($ip_n[$bits])));
+//            $ipbin = $bin.$ipbin;
+//            $bits--;
+//        }
+//        return $ipbin;
+//    }
+
     /**
      * Fetch the info from IP using CURL or file_get_contents.
-     *
-     * @param $url
-     *
-     * @throws \Exception
-     *
-     * @return mixed
+     * @throws \LithiumDev\LaraGeo\LaraGeoException
+     * @return object
      */
-    public function fetchInfo($url)
+    private function fetchInfo()
     {
         $response = null;
+        $params   = [];
 
-        if (function_exists('curl_init'))
+        $url = $this->url;
+        if (! empty($this->ip))
         {
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $url);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'LaraGeo Plugin Package v1.0');
-            $response = curl_exec($ch);
-            curl_close($ch);
+            $params['ip'] = $this->ip;
         }
-        elseif (ini_get('allow_url_fopen'))
+        $client   = new Client;
+        $response = $client->get($url, ['query' => $params]);
+
+        $data = $response->json(['object' => true]);
+
+        if ($data->geoplugin_status === 404 || empty($data))
         {
-            $response = file_get_contents($url, 'r');
-        }
-        else
-        {
-            throw new \Exception('LaraGeo Plugin requires the CURL PHP extension or allow_url_fopen set to 1!');
+            throw new LaraGeoException('Invalid Response, check the IP and try again.');
         }
 
-        $response = json_decode($response);
-
-        if (empty($response))
-        {
-            throw new \Exception('Oops! The data is empty! Is ' . $url . ' accessible?');
-        }
-
-        if (isset($response->geoplugin_status) && $response->geoplugin_status == 404)
-        {
-            throw new \Exception('Oops! Your request returned a 404 error! Is ' . $url . ' accessible?');
-        }
-
-        return $response;
+        return $data;
     }
 }
