@@ -185,7 +185,6 @@ class LaraGeo {
         }
         $client   = new Client;
         $response = $client->get($url, ['query' => $params]);
-        $response->
 
         $data = json_decode($response->getBody());
 
