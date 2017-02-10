@@ -1,5 +1,4 @@
 <?php
-
 namespace LithiumDev\LaraGeo;
 
 
@@ -186,8 +185,9 @@ class LaraGeo {
         }
         $client   = new Client;
         $response = $client->get($url, ['query' => $params]);
+        $response->
 
-        $data = $response->json(['object' => true]);
+        $data = json_decode($response->getBody());
 
         if ($data->geoplugin_status === 404 || empty($data))
         {
