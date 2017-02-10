@@ -1,23 +1,28 @@
 {
-    "name": "fuhrmann/larageo-plugin",
+    "name": "lithiumdev/larageo-plugin",
     "description": "A Laravel package that uses geoPlugin web service to fetch information from an IP.",
-    "keywords": ["geoipPlugin","ipinfo","laravel"],
+    "keywords": [
+        "geoipPlugin",
+        "ipinfo",
+        "laravel"
+    ],
     "homepage": "",
     "license": "MIT",
     "authors": [
         {
-            "name": "Ricardo Fuhrmann",
-            "email": "fuhrmanns@gmail.com",
+            "name": "Troy Siedsma",
+            "email": "tsiedsma@lithiumhosting.com",
             "role": "Developer"
         }
     ],
     "require": {
-        "php": ">=5.3.0",
-        "illuminate/support": ">=4.0.0"
+        "php": ">=5.5.9",
+        "illuminate/support": "~5.0",
+        "guzzlehttp/guzzle": "~5.3"
     },
     "autoload": {
         "psr-0": {
-            "Fuhrmann\\LarageoPlugin": "src/"
+            "LithiumDev\\LaraGeo": "src/"
         }
     },
     "minimum-stability": "dev"
