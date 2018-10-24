@@ -4,6 +4,7 @@ namespace LithiumDev\LaraGeo;
 
 use Cache;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ConnectException;
 
 class LaraGeo {
     /**
@@ -183,11 +184,17 @@ class LaraGeo {
         {
             $params['ip'] = $this->ip;
         }
-        $client   = new Client;
-        $response = $client->get($url, ['query' => $params]);
 
-        $data = json_decode($response->getBody());
+        try
+        {
+            $client = new Client;
+            $response = $client->get($url, ['query' => $params]);
 
+            $data = json_decode($response->getBody());
+        } catch (ConnectException $e)
+        {
+            throw new LaraGeoException('Curl Connection Issue, try again later.');
+        }
         if ($data->geoplugin_status === 404 || empty($data))
         {
             throw new LaraGeoException('Invalid Response, check the IP and try again.');
