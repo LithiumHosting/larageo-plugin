@@ -195,6 +195,11 @@ class LaraGeo {
         {
             throw new LaraGeoException('Curl Connection Issue, try again later.');
         }
+        if ($response->geoplugin_request == '127.0.0.1')
+        {
+            return $data;
+        }
+        
         if ($data->geoplugin_status === 404 || empty($data))
         {
             throw new LaraGeoException('Invalid Response, check the IP and try again.');
